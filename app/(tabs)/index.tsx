@@ -22,6 +22,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Card from "@/components/home/Card";
+import { useState } from "react";
 
 const MainMenu = {
   guide: {
@@ -69,6 +70,7 @@ const MainMenu = {
 };
 
 export default function HomeScreen() {
+  const [search, setSearch] = useState("");
   return (
     <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.container}>
@@ -88,6 +90,8 @@ export default function HomeScreen() {
                   marginLeft: 15,
                   color: "#2B6CE5",
                 }}
+                value={search}
+                onChangeText={(text) => setSearch(text)}
                 placeholder="Ayo mulai belajar disini"
                 placeholderTextColor={"#2B6CE5"}
               />
