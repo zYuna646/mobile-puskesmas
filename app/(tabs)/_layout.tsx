@@ -19,6 +19,7 @@ export default function TabLayout() {
         tabBarShowLabel: false,
         tabBarHideOnKeyboard: true,
       }}
+      initialRouteName="index"
     >
       <Tabs.Screen
         name="guide"
@@ -88,13 +89,59 @@ export default function TabLayout() {
       />
 
       <Tabs.Screen
-        name="quiz" 
+        name="quiz"
         options={{
           title: "Quiz",
           href: null,
           tabBarIcon: ({ color, focused }) => (
             <FontAwesome5
               name="calendar-alt"
+              size={24}
+              color={focused ? "#699BF7" : "#262162"}
+            />
+          ),
+        }}
+      />
+
+      {/* Adding the Profile tab */}
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          href: null, // This will disable navigation
+          tabBarIcon: ({ color, focused }) => (
+            <FontAwesome5
+              name="user"
+              size={24}
+              color={focused ? "#699BF7" : "#262162"}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="detailQuiz"
+        options={{
+          title: "Detail Quiz",
+          href: null, // This will disable navigation
+          tabBarIcon: ({ color, focused }) => (
+            <FontAwesome5
+              name="user"
+              size={24}
+              color={focused ? "#699BF7" : "#262162"}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="detailArticle"
+        options={{
+          title: "Detail Article",
+          href: null, // This will disable navigation
+          tabBarIcon: ({ color, focused }) => (
+            <FontAwesome5
+              name="user"
               size={24}
               color={focused ? "#699BF7" : "#262162"}
             />

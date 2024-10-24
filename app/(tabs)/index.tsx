@@ -6,9 +6,7 @@ import {
   ImageBackground,
   Text,
   TextInput,
-  KeyboardAvoidingView,
   TouchableOpacity,
-  FlatList,
   ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,12 +14,11 @@ import { MainText } from "@/constants/Text";
 const image = require("../../assets/home/header.png");
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import Card from "@/components/home/Card";
+import { Href, Link } from "expo-router"; // Import Link from expo-router
 import { useState } from "react";
 
 const MainMenu = {
@@ -71,6 +68,7 @@ const MainMenu = {
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
+
   return (
     <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.container}>
@@ -110,7 +108,6 @@ export default function HomeScreen() {
             width: "85%",
             alignSelf: "center",
             flex: 1,
-            // backgroundColor: "blue",
           }}
         >
           <View
@@ -122,25 +119,29 @@ export default function HomeScreen() {
             }}
           >
             <View style={styles.card}>
-              <TouchableOpacity style={styles.cardContent}>
-                <LinearGradient
-                  colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
-                  style={[StyleSheet.absoluteFillObject, styles.gradient]}
-                />
-                <View style={styles.content}>{MainMenu.guide.icon}</View>
-              </TouchableOpacity>
+              <Link href={MainMenu.guide.href as Href} asChild>
+                <TouchableOpacity style={styles.cardContent}>
+                  <LinearGradient
+                    colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
+                    style={[StyleSheet.absoluteFillObject, styles.gradient]}
+                  />
+                  <View style={styles.content}>{MainMenu.guide.icon}</View>
+                </TouchableOpacity>
+              </Link>
               <Text style={styles.cardText}>{MainMenu.guide.desc}</Text>
             </View>
             <View style={styles.card}>
-              <TouchableOpacity style={styles.cardContent}>
-                <LinearGradient
-                  colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
-                  style={[StyleSheet.absoluteFillObject, styles.gradient]}
-                />
-                <View style={styles.content}>
-                  {MainMenu.classification.icon}
-                </View>
-              </TouchableOpacity>
+              <Link href={MainMenu.classification.href as Href} asChild>
+                <TouchableOpacity style={styles.cardContent}>
+                  <LinearGradient
+                    colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
+                    style={[StyleSheet.absoluteFillObject, styles.gradient]}
+                  />
+                  <View style={styles.content}>
+                    {MainMenu.classification.icon}
+                  </View>
+                </TouchableOpacity>
+              </Link>
               <Text style={styles.cardText}>
                 {MainMenu.classification.desc}
               </Text>
@@ -155,28 +156,28 @@ export default function HomeScreen() {
             }}
           >
             <View style={styles.card}>
-              <TouchableOpacity style={styles.cardContent}>
-                <LinearGradient
-                  colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
-                  style={[StyleSheet.absoluteFillObject, styles.gradient]}
-                />
-                <View style={styles.content}>{MainMenu.activity.icon}</View>
-              </TouchableOpacity>
+              <Link href={MainMenu.activity.href as Href} asChild>
+                <TouchableOpacity style={styles.cardContent}>
+                  <LinearGradient
+                    colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
+                    style={[StyleSheet.absoluteFillObject, styles.gradient]}
+                  />
+                  <View style={styles.content}>{MainMenu.activity.icon}</View>
+                </TouchableOpacity>
+              </Link>
               <Text style={styles.cardText}>{MainMenu.activity.desc}</Text>
             </View>
             <View style={styles.card}>
-              <TouchableOpacity style={styles.cardContent}>
-                <LinearGradient
-                  colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
-                  style={[StyleSheet.absoluteFillObject, styles.gradient]}
-                />
-                <View style={styles.content}>
-                  {MainMenu.education.icon}
-                </View>
-              </TouchableOpacity>
-              <Text style={styles.cardText}>
-                {MainMenu.education.desc}
-              </Text>
+              <Link href={MainMenu.education.href as Href} asChild>
+                <TouchableOpacity style={styles.cardContent}>
+                  <LinearGradient
+                    colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
+                    style={[StyleSheet.absoluteFillObject, styles.gradient]}
+                  />
+                  <View style={styles.content}>{MainMenu.education.icon}</View>
+                </TouchableOpacity>
+              </Link>
+              <Text style={styles.cardText}>{MainMenu.education.desc}</Text>
             </View>
           </View>
           <View
@@ -188,31 +189,42 @@ export default function HomeScreen() {
             }}
           >
             <View style={styles.card}>
-              <TouchableOpacity style={styles.cardContent}>
-                <LinearGradient
-                  colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
-                  style={[StyleSheet.absoluteFillObject, styles.gradient]}
-                />
-                <View style={styles.content}>{MainMenu.quiz.icon}</View>
-              </TouchableOpacity>
+              <Link href={MainMenu.quiz.href as Href} asChild>
+                <TouchableOpacity style={styles.cardContent}>
+                  <LinearGradient
+                    colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
+                    style={[StyleSheet.absoluteFillObject, styles.gradient]}
+                  />
+                  <View style={styles.content}>{MainMenu.quiz.icon}</View>
+                </TouchableOpacity>
+              </Link>
               <Text style={styles.cardText}>{MainMenu.quiz.desc}</Text>
             </View>
             <View style={styles.card}>
-              <TouchableOpacity style={styles.cardContent}>
-                <LinearGradient
-                  colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
-                  style={[StyleSheet.absoluteFillObject, styles.gradient]}
-                />
-                <View style={styles.content}>
-                  {MainMenu.konsultasi.icon}
-                </View>
-              </TouchableOpacity>
-              <Text style={styles.cardText}>
-                {MainMenu.konsultasi.desc}
-              </Text>
+              <Link href={MainMenu.konsultasi.href as Href} asChild>
+                <TouchableOpacity style={styles.cardContent}>
+                  <LinearGradient
+                    colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
+                    style={[StyleSheet.absoluteFillObject, styles.gradient]}
+                  />
+                  <View style={styles.content}>
+                    {MainMenu.konsultasi.icon}
+                  </View>
+                </TouchableOpacity>
+              </Link>
+              <Text style={styles.cardText}>{MainMenu.konsultasi.desc}</Text>
             </View>
           </View>
         </ScrollView>
+      </View>
+
+      {/* Floating Profile Button */}
+      <View style={styles.fabContainer}>
+        <Link href={"/profile" as Href} asChild>
+          <TouchableOpacity style={styles.fab}>
+            <FontAwesome5 name="user" size={24} color="white" />
+          </TouchableOpacity>
+        </Link>
       </View>
     </KeyboardAwareScrollView>
   );
@@ -235,7 +247,12 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
     justifyContent: "flex-end",
   },
-
+  profileButton: {
+    position: "absolute",
+    top: 50, // Adjust as necessary for padding
+    right: 20, // Align to the right side of the screen
+    zIndex: 2, // Make sure it stays on top
+  },
   topText: {
     color: "white",
     fontSize: 17,
@@ -243,12 +260,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   content: {
-    zIndex: 1, // Makes sure content appears above the background
+    zIndex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
   gradient: {
-    borderRadius: 20, // Add borderRadius to the LinearGradient
+    borderRadius: 20,
   },
   textInput: {
     width: "100%",
@@ -267,7 +284,6 @@ const styles = StyleSheet.create({
   bottom: {
     flex: 2,
   },
-
   card: {
     alignSelf: "center",
   },
@@ -284,5 +300,20 @@ const styles = StyleSheet.create({
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
+  },
+  fabContainer: {
+    position: "absolute",
+    bottom: 30,
+    right: 30,
+    zIndex: 3,
+  },
+  fab: {
+    width: 60,
+    height: 60,
+    backgroundColor: "#0087FF",
+    borderRadius: 30,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
   },
 });

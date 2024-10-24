@@ -7,17 +7,62 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  RefreshControl,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { FontAwesome } from "@expo/vector-icons";
+import { Link } from "expo-router";
 const image = require("../../assets/home/header.png");
+
+const articles = [
+  {
+    id: 1,
+    title: "Makanan yang sehat untuk kesehatan Gigi dan Mulut",
+  },
+  {
+    id: 2,
+    title: "Cara Menyikat Gigi yang Benar",
+  },
+
+]
 
 export default function education() {
   const [search, setSearch] = useState("");
 
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
+
+  const renderItem = ({ item }: any) => (
+    <View key={item.id} style={styles.card}>
+      <Link
+        href={{ pathname: "/detailArticle" as any, params: { articleId: item.id } }}
+        asChild
+      >
+        <TouchableOpacity style={styles.cardImageContainer}>
+          <Image source={image} style={styles.cardImage} />
+        </TouchableOpacity>
+      </Link>
+
+      <Text style={styles.cardText}>
+        {item.title}
+      </Text>
+    </View>
+  );
+
   return (
-    <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
+    <KeyboardAwareScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <View style={styles.container}>
         <View style={styles.top}>
           <View style={styles.textInput}>
@@ -47,20 +92,7 @@ export default function education() {
               width: "100%",
             }}
           >
-            <View style={styles.card}>
-              <TouchableOpacity style={styles.cardImageContainer}>
-                <Image source={image} style={styles.cardImage} />
-              </TouchableOpacity>
-              <Text style={styles.cardText}>Makanan yang sehat untuk kesehatan Gigi dan Mulut</Text>
-            </View>
-          
-         
-            <View style={styles.card}>
-              <TouchableOpacity style={styles.cardImageContainer}>
-                <Image source={image} style={styles.cardImage} />
-              </TouchableOpacity>
-              <Text style={styles.cardText}>s</Text>
-            </View>
+            {articles.map((item) => renderItem({ item }))}
           </ScrollView>
         </View>
       </View>
@@ -84,7 +116,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    marginTop:'5%'
+    marginTop: "5%",
   },
 
   cardImageContainer: {
