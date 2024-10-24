@@ -8,6 +8,9 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Modal,
+  Alert,
+  Linking,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MainText } from "@/constants/Text";
@@ -68,6 +71,30 @@ const MainMenu = {
 
 export default function HomeScreen() {
   const [search, setSearch] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [nama, setNama] = useState("");
+  const [keluhan, setKeluhan] = useState("");
+
+  const handleKirimKeluhan = () => {
+    if (!nama || !keluhan) {
+      Alert.alert("Error", "Harap isi nama dan keluhan");
+      return;
+    }
+
+    const pesan = `Assalamualaikum Pak\nNama saya ${nama}\nKeluhan saya: ${keluhan}`;
+    const whatsappUrl = `https://wa.me/${process.env.EXPO_PUBLIC_NO_HP}?text=${encodeURIComponent(
+      pesan
+    )}`;
+
+    setModalVisible(false); // Tutup modal
+    setNama(""); // Reset form
+    setKeluhan("");
+
+    // Buka WhatsApp
+    Linking.openURL(whatsappUrl).catch(() =>
+      Alert.alert("Error", "Gagal membuka WhatsApp")
+    );
+  };
 
   return (
     <KeyboardAwareScrollView contentContainerStyle={{ flexGrow: 1 }}>
@@ -201,17 +228,15 @@ export default function HomeScreen() {
               <Text style={styles.cardText}>{MainMenu.quiz.desc}</Text>
             </View>
             <View style={styles.card}>
-              <Link href={MainMenu.konsultasi.href as Href} asChild>
-                <TouchableOpacity style={styles.cardContent}>
+              <View >
+                <TouchableOpacity style={styles.cardContent} onPress={() => setModalVisible(true)}>
                   <LinearGradient
                     colors={["rgba(0, 135, 255, 1)", "rgba(0, 135, 255, 0.59)"]}
                     style={[StyleSheet.absoluteFillObject, styles.gradient]}
                   />
-                  <View style={styles.content}>
-                    {MainMenu.konsultasi.icon}
-                  </View>
+                  <View style={styles.content}>{MainMenu.konsultasi.icon}</View>
                 </TouchableOpacity>
-              </Link>
+              </View>
               <Text style={styles.cardText}>{MainMenu.konsultasi.desc}</Text>
             </View>
           </View>
@@ -222,10 +247,48 @@ export default function HomeScreen() {
       <View style={styles.fabContainer}>
         <Link href={"/profile" as Href} asChild>
           <TouchableOpacity style={styles.fab}>
-            <FontAwesome5 name="user" size={24} color="white" />
+            <FontAwesome5 name="user" size={24} color="#0087FF" />
           </TouchableOpacity>
         </Link>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Form Konsultasi</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nama"
+              value={nama}
+              onChangeText={setNama}
+            />
+            <TextInput
+              style={[styles.input, { height: 100 }]}
+              placeholder="Keluhan"
+              value={keluhan}
+              onChangeText={setKeluhan}
+              multiline={true}
+            />
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleKirimKeluhan}
+            >
+              <Text style={styles.submitButtonText}>Kirim</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              style={styles.closeButton}
+            >
+              <Text style={styles.closeButtonText}>Tutup</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAwareScrollView>
   );
 }
@@ -259,6 +322,34 @@ const styles = StyleSheet.create({
     fontFamily: "PoppinRegular",
     textAlign: "center",
   },
+  input: {
+    width: "100%",
+    height: 50,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+  submitButton: {
+    backgroundColor: "#0087FF",
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  submitButtonText: {
+    color: "white",
+    textAlign: "center",
+    fontSize: 16,
+  },
+  closeButton: {
+    marginTop: 10,
+    padding: 10,
+  },
+  closeButtonText: {
+    color: "#0087FF",
+    textAlign: "center",
+  },
   content: {
     zIndex: 1,
     justifyContent: "center",
@@ -280,6 +371,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    marginBottom: 15,
+    textAlign: "center",
   },
   bottom: {
     flex: 2,
@@ -310,7 +419,7 @@ const styles = StyleSheet.create({
   fab: {
     width: 60,
     height: 60,
-    backgroundColor: "#0087FF",
+    backgroundColor: "white",
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",

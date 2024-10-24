@@ -36,6 +36,8 @@ export default function detailArticle() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>{articleData.title}</Text>
+
       <Image
         source={{ uri: articleData.coverImage }}
         style={styles.coverImage}
@@ -49,7 +51,6 @@ export default function detailArticle() {
           />
         </View>
       )}
-      <Text style={styles.title}>{articleData.title}</Text>
       <Text style={styles.content}>{articleData.content}</Text>
     </ScrollView>
   );
