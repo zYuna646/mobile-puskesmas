@@ -8,29 +8,34 @@ import {
   ScrollView,
   Image,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { FontAwesome } from "@expo/vector-icons";
 import { Link } from "expo-router";
+import useApi from "@/hooks/useApi";
+import SkeletonPlaceholder from "react-native-skeleton-placeholder"; // Import the library
+
 const image = require("../../assets/home/header.png");
-
-const articles = [
-  {
-    id: 1,
-    title: "Makanan yang sehat untuk kesehatan Gigi dan Mulut",
-  },
-  {
-    id: 2,
-    title: "Cara Menyikat Gigi yang Benar",
-  },
-
-]
 
 export default function education() {
   const [search, setSearch] = useState("");
-
+  const { get, data, loading, error } = useApi(
+    process.env.EXPO_PUBLIC_API as string
+  );
   const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await get("/articles");
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -39,22 +44,26 @@ export default function education() {
     }, 2000);
   }, []);
 
+  console.log(data);
+  
   const renderItem = ({ item }: any) => (
     <View key={item.id} style={styles.card}>
       <Link
-        href={{ pathname: "/detailArticle" as any, params: { articleId: item.id } }}
+        href={{
+          pathname: "/detailArticle", // no need for `as any` here
+          params: { article: JSON.stringify(item) }, // Use JSON.stringify synchronously
+        }}
         asChild
       >
         <TouchableOpacity style={styles.cardImageContainer}>
           <Image source={image} style={styles.cardImage} />
         </TouchableOpacity>
       </Link>
-
-      <Text style={styles.cardText}>
-        {item.title}
-      </Text>
+  
+      <Text style={styles.cardText}>{item.title}</Text>
     </View>
   );
+  
 
   return (
     <KeyboardAwareScrollView
@@ -92,7 +101,9 @@ export default function education() {
               width: "100%",
             }}
           >
-            {articles.map((item) => renderItem({ item }))}
+            {loading
+              ?  <ActivityIndicator size="large" color="#0087FF" />// Show skeletons while loading
+              : data.data?.map((item: any) => renderItem({ item }))}
           </ScrollView>
         </View>
       </View>
@@ -125,11 +136,11 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 6, // Bayangan muncul hanya di bawah
+      height: 6,
     },
     shadowOpacity: 0.3,
     shadowRadius: 3.84,
-    elevation: 10, // Bayangan lebih fokus di bagian bawah pada Android
+    elevation: 10,
     backgroundColor: "white",
     overflow: "hidden",
   },
@@ -137,7 +148,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: "100%",
     height: 158,
-    borderRadius: 20, // Ini diterapkan juga pada gambar agar memiliki border radius yang sama
+    borderRadius: 20,
   },
 
   cardText: {

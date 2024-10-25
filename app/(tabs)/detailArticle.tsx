@@ -22,24 +22,27 @@ const articleData = {
 };
 
 export default function detailArticle() {
-  const { articleId } = useLocalSearchParams();
-  console.log("Quiz ID:", articleId);
-
+  const { article } = useLocalSearchParams();
+  
+  const data:any = JSON.parse(article as any);
   // Extract the YouTube video ID from the video link
   const extractVideoId = (url: string) => {
     const regex = /(?:\?v=|\/embed\/|\/watch\?v=|\/)([a-zA-Z0-9_-]{11})/;
     const matches = url.match(regex);
     return matches ? matches[1] : null;
   };
+  console.log( process.env.EXPO_PUBLIC_API);
+  
+  console.log(`${ process.env.EXPO_PUBLIC_IMAGE_API}/${data.cover}`);
 
-  const videoId = extractVideoId(articleData.videoLink);
+  const videoId = extractVideoId(data.videoUrl);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>{articleData.title}</Text>
+      <Text style={styles.title}>{data.title}</Text>
 
       <Image
-        source={{ uri: articleData.coverImage }}
+        source={{ uri: `${ process.env.EXPO_PUBLIC_IMAGE_API}/uploads/article/image/${data.cover}` }}
         style={styles.coverImage}
       />
       {videoId && (
@@ -51,7 +54,7 @@ export default function detailArticle() {
           />
         </View>
       )}
-      <Text style={styles.content}>{articleData.content}</Text>
+      <Text style={styles.content}>{data.content}</Text>
     </ScrollView>
   );
 }

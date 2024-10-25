@@ -10,8 +10,9 @@ interface ApiResponse<T> {
   remove: (endpoint: string) => Promise<void>;
 }
 
+
 const useApi = <T = any>(baseUrl: string): ApiResponse<T> => {
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<T | null>(null);
 
@@ -44,9 +45,12 @@ const useApi = <T = any>(baseUrl: string): ApiResponse<T> => {
         },
         body: JSON.stringify(body),
       });
+      console.log("RESULT", response);
+
       const result = await response.json();
       setData(result);
     } catch (err: any) {
+    console.log(err);
       setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);

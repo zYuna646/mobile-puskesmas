@@ -1,11 +1,14 @@
+import useApi from "@/hooks/useApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Checkbox from "expo-checkbox";
-import React, { useState, useCallback } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  RefreshControl 
+import React, { useState, useCallback, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { Calendar, LocaleConfig, DateData } from "react-native-calendars";
 
@@ -62,7 +65,14 @@ const getTomorrowDate = () => {
 export default function Activity() {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, boolean>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<
+    Record<number, boolean>
+  >({});
+  const [marked, setMarked] = useState({});
+
+  const { get, data, loading, error } = useApi(
+    process.env.EXPO_PUBLIC_API as string
+  );
 
   const markedDates = {
     "2024-10-25": { marked: true },
@@ -77,8 +87,53 @@ export default function Activity() {
     }));
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await get("/categories");
+        const user:any = await AsyncStorage.getItem("user");
+        if (user) {
+          const response = await fetch(
+            `${process.env.EXPO_PUBLIC_API}/todos/user/${user.id}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const result = await response.json();
+          if (result) {
+            const transformedData = result.data.reduce((acc, item) => {
+              acc[item.id] = item;
+              return acc;
+            }, {});
+          
+            setMarked({
+              ...transformedData,
+              [selectedDate]: { selected: true, marked: true, selectedColor: "#2B6CE5" },
+            });
+          }
+          
+          console.log(result);
+        }
+    
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
+  }, [selectedDate]);
+
+  console.log(data);
+
   const handleDayPress = (day: DateData) => {
+    setMarked({
+      ...marked,
+      [day.dateString]: { selected: true, marked: true, selectedColor: "#2B6CE5" },
+    })
     setSelectedDate(day.dateString);
+
   };
 
   const onRefresh = useCallback(() => {
@@ -93,7 +148,9 @@ export default function Activity() {
   return (
     <ScrollView
       style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
     >
       <Text style={styles.title}>Aktivitasku</Text>
 
@@ -102,21 +159,25 @@ export default function Activity() {
           initialDate={new Date().toISOString().split("T")[0]}
           maxDate={getTomorrowDate()}
           onDayPress={handleDayPress}
-          markedDates={markedDates}
+          markedDates={marked}
         />
       </View>
 
       <View style={styles.checkBoxCard}>
-        {activity.map((item) => (
-          <View key={item.id} style={styles.checkBoxContainer}>
-            <Checkbox
-              color={"#2B6CE5"}
-              value={!!selectedAnswers[item.id]}
-              onValueChange={() => toggleCheckbox(item.id)}
-            />
-            <Text style={styles.checkboxLabel}>{item.title}</Text>
-          </View>
-        ))}
+        {loading ? (
+          <ActivityIndicator size="large" color="#0087FF" />
+        ) : (
+          data.data.map((item: any) => (
+            <View key={item.id} style={styles.checkBoxContainer}>
+              <Checkbox
+                color={"#2B6CE5"}
+                value={!!selectedAnswers[item.id]}
+                onValueChange={() => toggleCheckbox(item.id)}
+              />
+              <Text style={styles.checkboxLabel}>{item.name}</Text>
+            </View>
+          ))
+        )}
       </View>
     </ScrollView>
   );
