@@ -1,16 +1,23 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ScrollView, 
-  RefreshControl 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Platform,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  RefreshControl,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
-import { Video } from "expo-av"; 
+import React, { useCallback, useEffect, useState } from "react";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { FontAwesome } from "@expo/vector-icons";
-import { useRouter, useFocusEffect } from "expo-router";
-import * as ScreenOrientation from "expo-screen-orientation";
+import { Link } from "expo-router";
+import useApi from "@/hooks/useApi";
+import { Video } from "expo-av";
+import SkeletonPlaceholder from "react-native-skeleton-placeholder";
 
 interface VideoItem {
   id: number;
@@ -21,13 +28,13 @@ interface VideoItem {
 const videoData: VideoItem[] = [
   {
     id: 1,
-    title: "Cara Menyikat Gigi - Bagian 1",
+    title: "Cara Menyikat Gigi",
     source: require("../../assets/video/edukasi_diet.mp4"),
   },
   {
     id: 2,
-    title: "Cara Menyikat Gigi - Bagian 2",
-    source: require("../../assets/video/edukasi_diet.mp4"),
+    title: "Edukasi Bad Habbit",
+    source: require("../../assets/video/edukasi_bad_habbit.mp4"),
   },
   {
     id: 3,
@@ -36,148 +43,216 @@ const videoData: VideoItem[] = [
   },
 ];
 
+const image = require("../../assets/home/header.png");
+
 export default function Guide() {
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
-  const videoRef = useRef<Video>(null);
-  const currentVideo = videoData[currentVideoIndex];
-  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const { get, data, loading, error } = useApi(
+    process.env.EXPO_PUBLIC_API as string
+  );
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
+
+  const fetchData = async () => {
+    try {
+      await get("/articles");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
-    const playNewVideo = async () => {
-      if (videoRef.current) {
-        await videoRef.current.stopAsync();
-        await videoRef.current.playFromPositionAsync(0);
-      }
-    };
-    playNewVideo();
-  }, [currentVideoIndex]);
-
-  const nextVideo = () => {
-    if (currentVideoIndex < videoData.length - 1) {
-      setCurrentVideoIndex(currentVideoIndex + 1);
-    }
-  };
-
-  const previousVideo = () => {
-    if (currentVideoIndex > 0) {
-      setCurrentVideoIndex(currentVideoIndex - 1);
-    }
-  };
-
-  const handleFullScreenUpdate = async () => {
-    // Langsung ubah orientasi tanpa cek fullscreenUpdate
-    await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_LEFT);
-    await ScreenOrientation.unlockAsync(); // Kembalikan orientasi saat keluar fullscreen
-  };
+    fetchData();
+  }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    fetchData();
     setTimeout(() => {
-      setCurrentVideoIndex(0);
       setRefreshing(false);
     }, 2000);
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      const playVideo = async () => {
-        if (videoRef.current) {
-          await videoRef.current.playAsync();
-        }
-      };
+  const openVideoModal = (item: VideoItem) => {
+    setSelectedVideo(item);
+    setModalVisible(true);
+  };
 
-      const stopVideo = async () => {
-        if (videoRef.current) {
-          await videoRef.current.stopAsync();
-          setCurrentVideoIndex(0);
-        }
-      };
+  const renderItem = ({ item }: any) => (
+    <View key={item.id} style={styles.card}>
+      <TouchableOpacity
+        style={styles.cardImageContainer}
+        onPress={() => openVideoModal(item)}
+      >
+        <Image source={image} style={styles.cardImage} />
+      </TouchableOpacity>
 
-      playVideo();
-
-      return () => {
-        stopVideo();
-      };
-    }, [])
+      <Text style={styles.cardText}>{item.title}</Text>
+    </View>
   );
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
+    <KeyboardAwareScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <Text style={styles.title}>{currentVideo.title}</Text>
+      <View style={styles.container}>
+        <View style={styles.top}>
+          <Text
+            style={{
+              alignSelf: "center",
+              fontFamily: "PoppinRegular",
+              color: "#2B6CE5",
+              fontSize: 22,
+            }}
+          >
+            Video
+          </Text>
+        </View>
+        <View style={styles.bottom}>
+          <ScrollView
+            style={{
+              flex: 1,
+              alignSelf: "center",
+              width: "100%",
+            }}
+          >
+            {loading ? (
+              <ActivityIndicator size="large" color="#0087FF" />
+            ) : (
+              videoData?.map((item: any) => renderItem({ item }))
+            )}
+          </ScrollView>
+        </View>
 
-      <View style={styles.videoContainerWrapper}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={previousVideo}
-          disabled={currentVideoIndex === 0}
+        {/* Modal for Video */}
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setModalVisible(false)}
         >
-          <FontAwesome
-            name="chevron-left"
-            size={24}
-            color={currentVideoIndex === 0 ? "#ddd" : "#0087FF"}
-          />
-        </TouchableOpacity>
-
-        <Video
-          ref={videoRef}
-          source={currentVideo.source}
-          style={styles.video}
-          useNativeControls
-          isLooping
-          shouldPlay
-          // onFullscreenUpdate={handleFullScreenUpdate} // Langsung ubah orientasi di sini
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={nextVideo}
-          disabled={currentVideoIndex === videoData.length - 1}
-        >
-          <FontAwesome
-            name="chevron-right"
-            size={24}
-            color={
-              currentVideoIndex === videoData.length - 1 ? "#ddd" : "#0087FF"
-            }
-          />
-        </TouchableOpacity>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              {/* Display the video title */}
+              {selectedVideo && (
+                <>
+                  <Text style={styles.videoTitle}>{selectedVideo.title}</Text>
+                  <Video
+                    source={selectedVideo.source}
+                    rate={1.0}
+                    volume={1.0}
+                    isMuted={false}
+                    resizeMode="contain"
+                    shouldPlay
+                    style={styles.videoPlayer}
+                    useNativeControls
+                  />
+                </>
+              )}
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    backgroundColor: "#fff",
-    paddingTop: 50,
-    justifyContent: "center",
-    alignItems: "center",
+    flex: 1,
+    paddingTop: Platform.OS === "android" ? 50 : 0,
+    width: "90%",
+    alignSelf: "center",
   },
-  title: {
-    fontFamily: "PoppinRegular",
-    fontSize: 20,
-    marginBottom: 20,
+  videoTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
     textAlign: "center",
-    color: "#2B6CE5",
+    color: "#333",
   },
-  videoContainerWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+
+  top: {
+    flex: 1,
+  },
+  bottom: {
+    flex: 10,
+    marginTop: "5%",
+  },
+
+  card: {
+    marginTop: "5%",
+  },
+
+  cardImageContainer: {
+    width: "100%",
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 3.84,
+    elevation: 10,
+    backgroundColor: "white",
+    overflow: "hidden",
+  },
+
+  cardImage: {
+    width: "100%",
+    height: 158,
+    borderRadius: 20,
+  },
+
+  cardText: {
+    marginTop: "2%",
+    marginLeft: "2%",
+    fontSize: 13,
+    fontFamily: "PoppinRegular",
+  },
+
+  modalContainer: {
+    flex: 1,
     justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  video: {
-    width: 300,
+
+  modalContent: {
+    width: "90%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+
+  videoPlayer: {
+    width: "100%",
     height: 200,
-    backgroundColor: "#000",
+    borderRadius: 10,
   },
-  button: {
+
+  closeButton: {
+    marginTop: 20,
     padding: 10,
+    backgroundColor: "#0087FF",
+    borderRadius: 5,
+  },
+
+  closeButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });

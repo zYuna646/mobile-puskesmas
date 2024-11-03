@@ -9,7 +9,9 @@ import {
   ScrollView,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
+import { ALERT_TYPE, Toast } from "react-native-alert-notification";
 import { Calendar, LocaleConfig, DateData } from "react-native-calendars";
 
 LocaleConfig.locales["id"] = {
@@ -63,22 +65,19 @@ const getTomorrowDate = () => {
 };
 
 export default function Activity() {
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toISOString().split("T")[0]
+  );
+
   const [refreshing, setRefreshing] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<
     Record<number, boolean>
   >({});
-  const [marked, setMarked] = useState({});
+  const [marked, setMarked] = useState<Record<string, any>>({});
 
   const { get, data, loading, error } = useApi(
     process.env.EXPO_PUBLIC_API as string
   );
-
-  const markedDates = {
-    "2024-10-25": { marked: true },
-    "2024-10-26": { marked: true },
-    [selectedDate]: { selected: true, marked: true, selectedColor: "#2B6CE5" },
-  };
 
   const toggleCheckbox = (activityId: number) => {
     setSelectedAnswers((prev) => ({
@@ -87,57 +86,145 @@ export default function Activity() {
     }));
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await get("/categories");
-        const user:any = await AsyncStorage.getItem("user");
-        if (user) {
-          const response = await fetch(
-            `${process.env.EXPO_PUBLIC_API}/todos/user/${user.id}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          const result = await response.json();
-          if (result) {
-            const transformedData = result.data.reduce((acc, item) => {
-              acc[item.id] = item;
-              return acc;
-            }, {});
-          
-            setMarked({
-              ...transformedData,
-              [selectedDate]: { selected: true, marked: true, selectedColor: "#2B6CE5" },
-            });
+  console.log(selectedAnswers);
+
+  const fetchData = async () => {
+    try {
+      await get("/categories");
+      const userString = await AsyncStorage.getItem("user");
+      const user = JSON.parse(userString ? userString : "{}");
+
+      if (user) {
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_API}/todos/user/${user.id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
           }
-          
+        );
+
+        const result = await response.json();
+
+        if (result) {
           console.log(result);
+
+          const transformedData = result.data.reduce((acc, item) => {
+            acc[item.date] = { marked: true, dotColor: "#2B6CE5" };
+            return acc;
+          }, {});
+
+          const answer = findTodoByDate(result.data, selectedDate);
+          if (answer && answer.categories) {
+            console.log(answer.categories);
+
+            answer.categories.map((item) => {
+              selectedAnswers[item.category_id] = true;
+            });
+          } else {
+            setSelectedAnswers({});
+          }
+
+          // Update marked with selectedDate included
+          setMarked({
+            ...transformedData,
+            [selectedDate]: {
+              selected: true,
+              marked: true,
+              selectedColor: "#2B6CE5",
+            },
+          });
         }
-    
-      } catch (error) {
-        console.log(error);
       }
-    };
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const findTodoByDate = (todos: any, targetDate: any) => {
+    return todos.find((todo) => todo.date === targetDate);
+  };
+
+  useEffect(() => {
     fetchData();
   }, [selectedDate]);
 
-  console.log(data);
-
   const handleDayPress = (day: DateData) => {
-    setMarked({
-      ...marked,
-      [day.dateString]: { selected: true, marked: true, selectedColor: "#2B6CE5" },
-    })
     setSelectedDate(day.dateString);
-
   };
 
-  const onRefresh = useCallback(() => {
+  const handleSimpan = async () => {
+    try {
+      const userString = await AsyncStorage.getItem("user");
+      const user = JSON.parse(userString ? userString : "{}");
+  
+      // Ensure user and user.id exist
+      if (user && user.id) {
+        const dt = JSON.stringify({
+          date: selectedDate,
+          categories: Object.keys(selectedAnswers).map((key) => {
+            if (selectedAnswers[key]) { // Check if there are selected answers for the key
+              return {
+                category_id: key,
+              };
+            }
+            return null; // Return null if there are no selected answers for the key
+          }).filter(Boolean), // Remove any null entries from the array
+        });
+        
+        console.log(dt, 'here');
+        
+        const response = await fetch(
+          `${process.env.EXPO_PUBLIC_API}/todos/user/${user.id}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: dt
+          }
+        );
+  
+        // Handle the response
+        if (response.ok) {
+          const data = await response.json();
+          Toast.show({
+            type: ALERT_TYPE.SUCCESS,
+            title: "Success",
+            textBody: "Todo successfully saved",
+          })
+          console.log("Todo successfully saved:", data);
+        } else {
+          Toast.show({
+            type: ALERT_TYPE.DANGER,
+            title: "Error",
+            textBody: "An error occurred while saving the todo",
+          })
+          fetchData()
+          console.error("Failed to save Todo:", response.status, await response.text());
+        }
+      } else {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Error",
+          textBody: "An error occurred while saving the todo",
+        })
+        console.log("User not found or user ID is missing.");
+      }
+    } catch (error) {
+      Toast.show({
+        type: ALERT_TYPE.DANGER,
+        title: "Error",
+        textBody: "An error occurred while saving the todo",
+      })
+      console.error("An error occurred:", error);
+    }
+  };
+  
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
+    await fetchData();
     setTimeout(() => {
       setSelectedDate("");
       setSelectedAnswers({});
@@ -164,10 +251,19 @@ export default function Activity() {
       </View>
 
       <View style={styles.checkBoxCard}>
+        <Text
+          style={{
+            marginTop: "2%",
+            alignSelf: "center",
+            fontFamily: "PoppinRegular",
+          }}
+        >
+          {selectedDate ? `Aktivitas untuk tanggal ${selectedDate}` : ""}
+        </Text>
         {loading ? (
           <ActivityIndicator size="large" color="#0087FF" />
         ) : (
-          data.data.map((item: any) => (
+          data?.data?.map((item: any) => (
             <View key={item.id} style={styles.checkBoxContainer}>
               <Checkbox
                 color={"#2B6CE5"}
@@ -179,6 +275,32 @@ export default function Activity() {
           ))
         )}
       </View>
+      {selectedDate == new Date().toISOString().split("T")[0] ? (
+        <TouchableOpacity
+        onPress={handleSimpan}
+          style={{
+            marginTop: "5%",
+            alignSelf: "center",
+            backgroundColor: "#2B6CE5",
+            width: "100%",
+            borderRadius: 20,
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: "PoppinRegular",
+              color: "white",
+              fontSize: 20,
+              textAlign: "center",
+              padding: 10,
+            }}
+          >
+            Simpan
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <></>
+      )}
     </ScrollView>
   );
 }

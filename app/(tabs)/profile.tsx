@@ -48,18 +48,12 @@ export default function Profile() {
   const handleSave = async () => {
     try {
       await post("/respondens", user);
+      
       if (data.success) {
-        if (data.already_registered) {
-          await put(`/respondens/${data.data.id}`, user);
-          console.log("Data Updated:", data.data);
-          setUser(data.data);
-          await AsyncStorage.setItem('user', JSON.stringify(data.data));
-        } else {
+
           console.log("Data Created:", data.data);
           setUser(data.data);
           await AsyncStorage.setItem('user', JSON.stringify(data.data));
-        }
-        
         // Menampilkan notifikasi sukses
         Toast.show({
           type: ALERT_TYPE.SUCCESS,

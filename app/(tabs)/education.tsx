@@ -25,27 +25,27 @@ export default function education() {
     process.env.EXPO_PUBLIC_API as string
   );
   const [refreshing, setRefreshing] = useState<boolean>(false);
-
+  const fetchData = async () => {
+    try {
+      await get("/articles");
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await get("/articles");
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchData();
   }, []);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    fetchData();
     setTimeout(() => {
       setRefreshing(false);
     }, 2000);
   }, []);
 
   console.log(data);
-  
+
   const renderItem = ({ item }: any) => (
     <View key={item.id} style={styles.card}>
       <Link
@@ -59,11 +59,10 @@ export default function education() {
           <Image source={image} style={styles.cardImage} />
         </TouchableOpacity>
       </Link>
-  
+
       <Text style={styles.cardText}>{item.title}</Text>
     </View>
   );
-  
 
   return (
     <KeyboardAwareScrollView
@@ -101,9 +100,11 @@ export default function education() {
               width: "100%",
             }}
           >
-            {loading
-              ?  <ActivityIndicator size="large" color="#0087FF" />// Show skeletons while loading
-              : data.data?.map((item: any) => renderItem({ item }))}
+            {loading ? (
+              <ActivityIndicator size="large" color="#0087FF" /> // Show skeletons while loading
+            ) : (
+              data.data?.map((item: any) => renderItem({ item }))
+            )}
           </ScrollView>
         </View>
       </View>
