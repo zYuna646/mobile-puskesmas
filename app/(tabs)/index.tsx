@@ -55,7 +55,7 @@ const MainMenu = {
   },
   quiz: {
     title: "Quiz",
-    desc: "Kuisioner",
+    desc: "Motivational Interview",
     href: "/quiz",
     icon: (
       <MaterialCommunityIcons name="account-question" size={70} color="white" />
@@ -80,11 +80,9 @@ export default function HomeScreen() {
       Alert.alert("Error", "Harap isi nama dan keluhan");
       return;
     }
+    const pesan = `Dengan hormat,\n\nNama saya ${nama},\nSaya ingin menyampaikan keluhan mengenai: ${keluhan}.\n\nAtas perhatian Bapak/Ibu, saya ucapkan terima kasih.`;
 
-    const pesan = `Assalamualaikum Pak\nNama saya ${nama}\nKeluhan saya: ${keluhan}`;
-    const whatsappUrl = `https://wa.me/${process.env.EXPO_PUBLIC_NO_HP}?text=${encodeURIComponent(
-      pesan
-    )}`;
+    const whatsappUrl = `https://wa.me/6282319514419?text=${encodeURIComponent(pesan)}`;
 
     setModalVisible(false); // Tutup modal
     setNama(""); // Reset form

@@ -22,24 +22,34 @@ import SkeletonPlaceholder from "react-native-skeleton-placeholder";
 interface VideoItem {
   id: number;
   title: string;
+  cover: string;
   source: any;
 }
 
 const videoData: VideoItem[] = [
   {
     id: 1,
-    title: "Cara Menyikat Gigi",
-    source: require("../../assets/video/edukasi_diet.mp4"),
+    title: "Edukasi Menyikat Gigi",
+    cover: require("../../assets/cover/EDUKASI MENYIKAT GIGII.png"),
+    source: require("../../assets/video/EDUKASI MENYIKAT GIGI BARU.mp4"),
   },
   {
     id: 2,
-    title: "Edukasi Bad Habbit",
-    source: require("../../assets/video/edukasi_bad_habbit.mp4"),
+    title: "PERILAKU BURUK YANG DAPAT MERUSAK GIGI",
+    cover: require("../../assets/cover/PERILAKU BURUK.png"),
+    source: require("../../assets/video/PERILAKU BURUK YANG DAPAT MERUSAK GIGI.mp4"),
   },
   {
     id: 3,
-    title: "Cara Menyikat Gigi - Bagian 3",
-    source: require("../../assets/video/edukasi_diet.mp4"),
+    title: "PRAKTEK MENYIKAT GIGI",
+    cover: require("../../assets/cover/PRAKTEK MENYIKAT GIGI.png"),
+    source: require("../../assets/video/pRAKTEK MENYIKAT GIGI.mp4"),
+  },
+  {
+    id: 4,
+    title: "BAD HABBIT",
+    cover: require("../../assets/cover/PERILAKU BURUK.png"),
+    source: require("../../assets/video/VIDEO BAD HABIT BARU.mp4"),
   },
 ];
 
@@ -85,7 +95,7 @@ export default function Guide() {
         style={styles.cardImageContainer}
         onPress={() => openVideoModal(item)}
       >
-        <Image source={image} style={styles.cardImage} />
+        <Image source={item.cover} style={styles.cardImage} />
       </TouchableOpacity>
 
       <Text style={styles.cardText}>{item.title}</Text>
