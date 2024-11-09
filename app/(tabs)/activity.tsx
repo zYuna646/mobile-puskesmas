@@ -1,6 +1,7 @@
 import useApi from "@/hooks/useApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Checkbox from "expo-checkbox";
+import { router } from "expo-router";
 import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
@@ -74,6 +75,7 @@ export default function Activity() {
     Record<number, boolean>
   >({});
   const [marked, setMarked] = useState<Record<string, any>>({});
+  const [hasMonthlyActivities, setHasMonthlyActivities] = useState(false);
 
   const { get, data, loading, error } = useApi(
     process.env.EXPO_PUBLIC_API as string
@@ -93,7 +95,11 @@ export default function Activity() {
       await get("/categories");
       const userString = await AsyncStorage.getItem("user");
       const user = JSON.parse(userString ? userString : "{}");
-
+      if (!user || !user.id) {
+        // Redirect to profile screen if user data is not found
+        router.navigate('/profile'); // Change 'Profile' to the correct route name for your profile screen
+        return;
+      }
       if (user) {
         const response = await fetch(
           `${process.env.EXPO_PUBLIC_API}/todos/user/${user.id}`,
@@ -110,7 +116,25 @@ export default function Activity() {
         if (result) {
           console.log(result);
 
-          const transformedData = result.data.reduce((acc, item) => {
+          // Get today's date for comparison
+          const today = new Date().toISOString().split("T")[0];
+          const currentMonth = new Date().getMonth() + 1;
+          const currentYear = new Date().getFullYear();
+
+          // Check for activities in the current month that are not today
+          const hasActivitiesInCurrentMonth = result.data.some((item: any) => {
+            const itemDate = new Date(item.date);
+            const itemDateString = item.date;
+            return (
+              itemDate.getMonth() + 1 === currentMonth &&
+              itemDate.getFullYear() === currentYear &&
+              itemDateString !== today // Check that the date is not today
+            );
+          });
+
+          setHasMonthlyActivities(hasActivitiesInCurrentMonth);
+
+          const transformedData = result.data.reduce((acc: any, item: any) => {
             acc[item.date] = { marked: true, dotColor: "#2B6CE5" };
             return acc;
           }, {});
@@ -119,7 +143,7 @@ export default function Activity() {
           if (answer && answer.categories) {
             console.log(answer.categories);
 
-            answer.categories.map((item) => {
+            answer.categories.map((item: any) => {
               selectedAnswers[item.category_id] = true;
             });
           } else {
@@ -143,7 +167,7 @@ export default function Activity() {
   };
 
   const findTodoByDate = (todos: any, targetDate: any) => {
-    return todos.find((todo) => todo.date === targetDate);
+    return todos.find((todo: any) => todo.date === targetDate);
   };
 
   useEffect(() => {
@@ -158,23 +182,24 @@ export default function Activity() {
     try {
       const userString = await AsyncStorage.getItem("user");
       const user = JSON.parse(userString ? userString : "{}");
-  
-      // Ensure user and user.id exist
+
       if (user && user.id) {
         const dt = JSON.stringify({
           date: selectedDate,
-          categories: Object.keys(selectedAnswers).map((key) => {
-            if (selectedAnswers[key]) { // Check if there are selected answers for the key
-              return {
-                category_id: key,
-              };
-            }
-            return null; // Return null if there are no selected answers for the key
-          }).filter(Boolean), // Remove any null entries from the array
+          categories: Object.keys(selectedAnswers)
+            .map((key: any) => {
+              if (selectedAnswers[key]) {
+                return {
+                  category_id: key,
+                };
+              }
+              return null;
+            })
+            .filter(Boolean),
         });
-        
-        console.log(dt, 'here');
-        
+
+        console.log(dt, "here");
+
         const response = await fetch(
           `${process.env.EXPO_PUBLIC_API}/todos/user/${user.id}`,
           {
@@ -182,34 +207,37 @@ export default function Activity() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: dt
+            body: dt,
           }
         );
-  
-        // Handle the response
+
         if (response.ok) {
           const data = await response.json();
           Toast.show({
             type: ALERT_TYPE.SUCCESS,
             title: "Success",
             textBody: "Todo successfully saved",
-          })
+          });
           console.log("Todo successfully saved:", data);
         } else {
           Toast.show({
             type: ALERT_TYPE.DANGER,
             title: "Error",
             textBody: "An error occurred while saving the todo",
-          })
-          fetchData()
-          console.error("Failed to save Todo:", response.status, await response.text());
+          });
+          fetchData();
+          console.error(
+            "Failed to save Todo:",
+            response.status,
+            await response.text()
+          );
         }
       } else {
         Toast.show({
           type: ALERT_TYPE.DANGER,
           title: "Error",
           textBody: "An error occurred while saving the todo",
-        })
+        });
         console.log("User not found or user ID is missing.");
       }
     } catch (error) {
@@ -217,11 +245,11 @@ export default function Activity() {
         type: ALERT_TYPE.DANGER,
         title: "Error",
         textBody: "An error occurred while saving the todo",
-      })
+      });
       console.error("An error occurred:", error);
     }
   };
-  
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchData();
@@ -251,15 +279,18 @@ export default function Activity() {
       </View>
 
       <View style={styles.checkBoxCard}>
-        <Text
-          style={{
-            marginTop: "2%",
-            alignSelf: "center",
-            fontFamily: "PoppinRegular",
-          }}
-        >
-          {selectedDate ? `Aktivitas untuk tanggal ${selectedDate}` : ""}
-        </Text>
+        {hasMonthlyActivities && (
+          <Text
+            style={{
+              marginTop: "2%",
+              alignSelf: "center",
+              fontFamily: "PoppinRegular",
+              color: "red",
+            }}
+          >
+            Kamu sudah menyimpan aktivitas pada bulan ini.
+          </Text>
+        )}
         {loading ? (
           <ActivityIndicator size="large" color="#0087FF" />
         ) : (
@@ -275,9 +306,10 @@ export default function Activity() {
           ))
         )}
       </View>
-      {selectedDate == new Date().toISOString().split("T")[0] ? (
+      {selectedDate == new Date().toISOString().split("T")[0] &&
+      !hasMonthlyActivities ? (
         <TouchableOpacity
-        onPress={handleSimpan}
+          onPress={handleSimpan}
           style={{
             marginTop: "5%",
             alignSelf: "center",

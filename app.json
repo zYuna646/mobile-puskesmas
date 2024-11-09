@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "puskesmas-mobile",
-    "slug": "puskesmas-mobile",
+    "name": "Motivational Interview",
+    "slug": "motivational-interview",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -20,7 +20,12 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff",
         "softwareKeyboardLayoutMode": "pan"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.zychan.motivationalinterview"
     },
     "web": {
       "bundler": "metro",
@@ -44,6 +49,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "6ea60e88-4706-43b8-829f-13a6db4f0d6b"
+      }
+    },
+    "owner": "zychan"
   }
 }

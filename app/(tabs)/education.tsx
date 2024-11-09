@@ -56,7 +56,12 @@ export default function education() {
         asChild
       >
         <TouchableOpacity style={styles.cardImageContainer}>
-          <Image source={image} style={styles.cardImage} />
+          <Image
+            source={{
+              uri: `${process.env.EXPO_PUBLIC_IMAGE_API}/uploads/article/image/${item.cover}`,
+            }}
+            style={styles.cardImage}
+          />
         </TouchableOpacity>
       </Link>
 

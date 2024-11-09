@@ -21,6 +21,7 @@ export default function Classification() {
   const [resultModalVisible, setResultModalVisible] = useState(false);
   const [tutorialModalVisible, setTutorialModalVisible] = useState(false); // Separate modal for tutorial
   const [resultImage, setResultImage] = useState(null);
+  const [detectedLabels, setDetectedLabels] = useState([]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -37,8 +38,9 @@ export default function Classification() {
     }
 
     const pickerResult = await ImagePicker.launchImageLibraryAsync();
+    
     if (!pickerResult.cancelled) {
-      uploadImage(pickerResult.uri);
+      uploadImage(pickerResult.assets[0].uri);
     }
   };
 
@@ -49,23 +51,25 @@ export default function Classification() {
       name: "tooth_image.jpg",
       type: "image/jpeg",
     });
-
+  
     try {
-      const response = await fetch(`https://be6e-36-85-220-51.ngrok-free.app/upload`, {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_AI_API}/upload`, {
         method: "POST",
         body: formData,
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-
+  
       if (!response.ok) {
         throw new Error("Failed to upload image");
       }
-
-      const result = await response.blob();
-      const imageUrl = URL.createObjectURL(result);
-      setResultImage(imageUrl);
+  
+      const responseData = await response.json();
+      
+      // Set the result image (base64 string) and detected labels
+      setResultImage(`data:image/jpeg;base64,${responseData.image_data}`);
+      setDetectedLabels(responseData.labels);
       setResultModalVisible(true);
     } catch (error) {
       console.error(error);
@@ -124,10 +128,23 @@ export default function Classification() {
         visible={resultModalVisible}
         onRequestClose={() => setResultModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+        <View style={styles.fullScreenModalContainer}>
+          <View style={styles.fullScreenModalContent}>
             <Text style={styles.modalTitle}>Hasil Pemeriksaan Gigi</Text>
-            {resultImage && <Image source={{ uri: resultImage }} style={styles.resultImage} />}
+            {resultImage && (
+              <Image source={{ uri: resultImage }} style={styles.fullScreenResultImage} resizeMode="contain" />
+            )}
+            <View style={styles.labelContainer}>
+              {detectedLabels.length > 0 ? (
+                detectedLabels.map((label, index) => (
+                  <Text key={index} style={styles.labelText}>
+                    Gigi Anda terindikasi: {label}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.labelText}>Tidak ada label terdeteksi.</Text>
+              )}
+            </View>
             <Button title="Tutup" onPress={() => setResultModalVisible(false)} />
           </View>
         </View>
@@ -139,7 +156,7 @@ export default function Classification() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#fff", // White background for entire app
   },
   header: {
     padding: 15,
@@ -187,20 +204,37 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
+  fullScreenModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)", // Slightly darker background for emphasis
   },
-  modalText: {
+  fullScreenModalContent: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: "#fff", // White background for result content
+  },
+  fullScreenResultImage: {
+    width: "100%",
+    height: "70%", // Adjust as needed to fit more of the screen
+  },
+  labelContainer: {
+    marginTop: 15,
+    alignItems: "center",
+    width: "100%",
+  },
+  labelText: {
     fontSize: 16,
     marginVertical: 5,
     textAlign: "center",
-  },
-  resultImage: {
-    width: "100%",
-    height: 200,
-    marginTop: 10,
-    borderRadius: 10,
+    color: "#2B6CE5", // Slightly emphasize the text
+    fontWeight: "bold", // Make text more prominent
+    padding: 5,
+    backgroundColor: "#E0F7FA", // Light background for emphasis
+    borderRadius: 5,
   },
 });

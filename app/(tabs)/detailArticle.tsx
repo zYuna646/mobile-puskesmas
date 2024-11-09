@@ -35,7 +35,7 @@ export default function detailArticle() {
   
   console.log(`${ process.env.EXPO_PUBLIC_IMAGE_API}/${data.cover}`);
 
-  const videoId = extractVideoId(data.videoUrl);
+  const videoId = data.videoUrl? extractVideoId(data.videoUrl) : '';
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
